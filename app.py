@@ -26,7 +26,6 @@ if paste_result.image_data is not None:
       use_column_width=True,
   )
 
-# Mantenemos también la opción de subir archivo por si acaso
 else:
   archivo_subido = st.file_uploader(
       "O si prefieres, sube tu recorte de pantalla", type=["png", "jpg", "jpeg"]
@@ -152,7 +151,7 @@ if imagen is not None:
     df.to_excel(file_name, index=False)
 
     with open(file_name, "rb") as f:
-      st.download_button(
+      btn_descarga = st.download_button(
           label="Descargar Archivo Excel Completo",
           data=f,
           file_name=file_name,
@@ -160,3 +159,8 @@ if imagen is not None:
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           ),
       )
+
+    # Botón para limpiar la app y hacer un nuevo proceso de inmediato
+    st.markdown("---")
+    if st.button("🔄 Procesar otro recorte (Reiniciar App)"):
+      st.rerun()
