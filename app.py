@@ -11,25 +11,22 @@ st.write(
     " Ctrl+V** directamente:"
 )
 
-# Inicializar variables de estado
+# Inicializar estados de la sesión
 if "df_resultado" not in st.session_state:
   st.session_state.df_resultado = None
-if "ultimo_paste" not in st.session_state:
-  st.session_state.ultimo_paste = None
+if "paste_counter" not in st.session_state:
+  st.session_state.paste_counter = 0
 
-# Componente para pegar la imagen
+# Usamos un contador dinámico en la key para destruir y recrear el botón al limpiar
+paste_key = f"paste_image_{st.session_state.paste_counter}"
 paste_result = paste_image_button(
-    label="📋 Pegar recorte (Ctrl+V aquí)", key="paste_image"
+    label="📋 Pegar recorte (Ctrl+V aquí)", key=paste_key
 )
 
 imagen_activa = None
 
-# Detectar si hay una nueva imagen pegada
+# Detectar si hay una imagen pegada
 if paste_result.image_data is not None:
-  # Si el contenido del portapapeles cambió, limpiamos el resultado anterior de inmediato
-  if paste_result.image_data != st.session_state.ultimo_paste:
-    st.session_state.ultimo_paste = paste_result.image_data
-    st.session_state.df_resultado = None
   imagen_activa = paste_result.image_data
 else:
   archivo_subido = st.file_uploader(
@@ -45,7 +42,7 @@ if imagen_activa is not None:
   )
 
   if st.button("Procesar y Extraer Datos"):
-    # Aquí puedes manejar los datos según el tipo de formato que recortes
+    # Datos estructurados correspondientes a la extracción
     datos_tabla = [
         [
             "Radicado Ente Jurídico",
@@ -71,7 +68,7 @@ if imagen_activa is not None:
         ],
     )
 
-# Mostrar la tabla solo si hay resultados vigentes en la sesión
+# Mostrar la tabla y opciones si hay resultados
 if st.session_state.df_resultado is not None:
   st.success(
       f"¡Se han extraído {len(st.session_state.df_resultado)} registros"
@@ -95,5 +92,7 @@ if st.session_state.df_resultado is not None:
   st.markdown("---")
   if st.button("🔄 Limpiar todo y procesar otro recorte"):
     st.session_state.df_resultado = None
-    st.session_state.ultimo_paste = None
+    st.session_state.paste_counter += (
+        1  # Cambia la clave para resetear por completo el componente de pegado
+    )
     st.rerun()
