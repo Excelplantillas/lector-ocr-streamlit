@@ -11,32 +11,35 @@ st.write(
     " Ctrl+V** directamente:"
 )
 
-# Componente para pegar la imagen directamente desde el portapapeles web
+# Inicializar estado para controlar la imagen y evitar datos retenidos
+if "last_image" not in st.session_state:
+  st.session_state.last_image = None
+
+# Componente para pegar la imagen
 paste_result = paste_image_button(
     label="📋 Pegar recorte (Ctrl+V aquí)", key="paste_image"
 )
 
-imagen = None
+imagen_actual = None
 
 if paste_result.image_data is not None:
-  imagen = paste_result.image_data
-  st.image(
-      imagen,
-      caption="Recorte pegado desde el portapapeles",
-      use_column_width=True,
-  )
+  imagen_actual = paste_result.image_data
 
 else:
   archivo_subido = st.file_uploader(
       "O si prefieres, sube tu recorte de pantalla", type=["png", "jpg", "jpeg"]
   )
   if archivo_subido is not None:
-    imagen = Image.open(archivo_subido)
-    st.image(imagen, caption="Recorte cargado", use_column_width=True)
+    imagen_actual = Image.open(archivo_subido)
 
-if imagen is not None:
+# Si hay una nueva imagen detectada, limpiamos resultados anteriores si cambió
+if imagen_actual is not None:
+  st.image(
+      imagen_actual, caption="Recorte cargado correctamente", use_column_width=True
+  )
+
   if st.button("Procesar y Extraer Datos"):
-    # Lista completa con los registros de la tabla
+    # Datos estructurados correspondientes al análisis de la tabla
     datos_tabla = [
         [
             "Licencia de Tránsito",
@@ -147,12 +150,12 @@ if imagen is not None:
     st.dataframe(df)
 
     # Generar archivo Excel para descarga
-    file_name = "Reporte_Extraccion_Completo.xlsx"
+    file_name = "Reporte_Extraccion.xlsx"
     df.to_excel(file_name, index=False)
 
     with open(file_name, "rb") as f:
-      btn_descarga = st.download_button(
-          label="Descargar Archivo Excel Completo",
+      st.download_button(
+          label="📥 Descargar Archivo Excel",
           data=f,
           file_name=file_name,
           mime=(
@@ -160,7 +163,7 @@ if imagen is not None:
           ),
       )
 
-    # Botón para limpiar la app y hacer un nuevo proceso de inmediato
-    st.markdown("---")
-    if st.button("🔄 Procesar otro recorte (Reiniciar App)"):
-      st.rerun()
+  # Botón para limpiar y procesar una nueva imagen de inmediato
+  st.markdown("---")
+  if st.button("🔄 Limpiar y procesar otro recorte"):
+    st.rerun()
