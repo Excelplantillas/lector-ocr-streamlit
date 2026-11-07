@@ -1,24 +1,41 @@
 import pandas as pd
 from PIL import Image
 import streamlit as st
+from streamlit_paste_button import paste_image_button
 
 st.set_page_config(page_title="Extractor a Excel", page_icon="📊")
 
 st.title("Extractor de Datos de Tablas a Excel")
 st.write(
-    "Sube tu recorte de pantalla con la tabla para extraer todos los"
-    " registros."
+    "Haz tu recorte (`Win + Shift + S`) y haz clic abajo para **pegarlo con"
+    " Ctrl+V** directamente:"
 )
 
-# Componente web para cargar la imagen del recorte
-archivo_subido = st.file_uploader(
-    "Sube tu recorte de pantalla", type=["png", "jpg", "jpeg"]
+# Componente para pegar la imagen directamente desde el portapapeles web
+paste_result = paste_image_button(
+    label="📋 Pegar recorte (Ctrl+V aquí)", key="paste_image"
 )
 
-if archivo_subido is not None:
-  imagen = Image.open(archivo_subido)
-  st.image(imagen, caption="Recorte cargado", use_column_width=True)
+imagen = None
 
+if paste_result.image_data is not None:
+  imagen = paste_result.image_data
+  st.image(
+      imagen,
+      caption="Recorte pegado desde el portapapeles",
+      use_column_width=True,
+  )
+
+# Mantenemos también la opción de subir archivo por si acaso
+else:
+  archivo_subido = st.file_uploader(
+      "O si prefieres, sube tu recorte de pantalla", type=["png", "jpg", "jpeg"]
+  )
+  if archivo_subido is not None:
+    imagen = Image.open(archivo_subido)
+    st.image(imagen, caption="Recorte cargado", use_column_width=True)
+
+if imagen is not None:
   if st.button("Procesar y Extraer Datos"):
     # Lista completa con los registros de la tabla
     datos_tabla = [
