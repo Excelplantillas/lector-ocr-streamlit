@@ -11,43 +11,41 @@ st.write(
     " Ctrl+V** directamente:"
 )
 
-# Inicializar el estado de la sesión
-if "imagen_actual" not in st.session_state:
-  st.session_state.imagen_actual = None
+# Inicializar variables de estado
 if "df_resultado" not in st.session_state:
   st.session_state.df_resultado = None
+if "ultimo_paste" not in st.session_state:
+  st.session_state.ultimo_paste = None
 
 # Componente para pegar la imagen
 paste_result = paste_image_button(
     label="📋 Pegar recorte (Ctrl+V aquí)", key="paste_image"
 )
 
-nueva_imagen = None
+imagen_activa = None
 
+# Detectar si hay una nueva imagen pegada
 if paste_result.image_data is not None:
-  nueva_imagen = paste_result.image_data
+  # Si el contenido del portapapeles cambió, limpiamos el resultado anterior de inmediato
+  if paste_result.image_data != st.session_state.ultimo_paste:
+    st.session_state.ultimo_paste = paste_result.image_data
+    st.session_state.df_resultado = None
+  imagen_activa = paste_result.image_data
 else:
   archivo_subido = st.file_uploader(
       "O si prefieres, sube tu recorte de pantalla", type=["png", "jpg", "jpeg"]
   )
   if archivo_subido is not None:
-    nueva_imagen = Image.open(archivo_subido)
+    imagen_activa = Image.open(archivo_subido)
 
-# Si se detecta una imagen nueva, limpiamos los datos viejos y actualizamos
-if nueva_imagen is not None:
-  # Si la imagen cambió respecto a la anterior, borramos resultados pasados
-  if st.session_state.imagen_actual != nueva_imagen:
-    st.session_state.imagen_actual = nueva_imagen
-    st.session_state.df_resultado = None  # Limpia la tabla anterior
-
+# Mostrar la imagen activa si existe
+if imagen_activa is not None:
   st.image(
-      st.session_state.imagen_actual,
-      caption="Nuevo recorte cargado",
-      use_column_width=True,
+      imagen_activa, caption="Recorte cargado correctamente", use_column_width=True
   )
 
   if st.button("Procesar y Extraer Datos"):
-    # Aquí van los datos estructurados correspondientes
+    # Aquí puedes manejar los datos según el tipo de formato que recortes
     datos_tabla = [
         [
             "Radicado Ente Jurídico",
@@ -73,7 +71,7 @@ if nueva_imagen is not None:
         ],
     )
 
-# Si ya hay datos procesados en la sesión, los mostramos
+# Mostrar la tabla solo si hay resultados vigentes en la sesión
 if st.session_state.df_resultado is not None:
   st.success(
       f"¡Se han extraído {len(st.session_state.df_resultado)} registros"
@@ -81,7 +79,6 @@ if st.session_state.df_resultado is not None:
   )
   st.dataframe(st.session_state.df_resultado)
 
-  # Generar archivo Excel para descarga
   file_name = "Reporte_Extraccion.xlsx"
   st.session_state.df_resultado.to_excel(file_name, index=False)
 
@@ -97,6 +94,6 @@ if st.session_state.df_resultado is not None:
 
   st.markdown("---")
   if st.button("🔄 Limpiar todo y procesar otro recorte"):
-    st.session_state.imagen_actual = None
     st.session_state.df_resultado = None
+    st.session_state.ultimo_paste = None
     st.rerun()
